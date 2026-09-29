@@ -218,6 +218,21 @@ function addFieldLine(pts) {
   cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), tangent);
   cone.position.copy(pos); arrowGroup.add(cone);
 }
+function radialPeak(points) {
+  return Math.max(...points.map(p => Math.hypot(p.y, p.z)));
+}
+// Place one streamline in each visible radial band. The outermost band starts
+// on the N end face; the remaining bands start on a long face of the magnet.
+function sideSeedX(targetPeak) {
+  let nearEnd = -1.649, nearMiddle = -0.35;
+  for (let i = 0; i < 13; i++) {
+    const x = (nearEnd + nearMiddle) / 2;
+    const peak = radialPeak(traceLine(new THREE.Vector3(x, 0, 0.335)));
+    if (peak > targetPeak) nearEnd = x;
+    else nearMiddle = x;
+  }
+  return (nearEnd + nearMiddle) / 2;
+}
 function rebuild() {
   clearGroup(fieldGroup); clearGroup(arrowGroup); paperMarks.clear();
   const density = Number(document.querySelector('#density').value);
@@ -228,25 +243,22 @@ function rebuild() {
     updateVisibility();
     return;
   }
-  const seeds = Array.from({ length: density }, (_, i) => ({
-    x: -1.46 - 0.025 * i,
-    radius: 0.345 + 0.08 * i / (density - 1)
-  }));
-  for (let layer = 0; layer < seeds.length; layer++) {
-    const seed = seeds[layer];
-    const count = slice ? 2 : 8 + density;
+  const endRadius = 0.30;
+  const outerPeak = radialPeak(traceLine(new THREE.Vector3(-1.68, 0, endRadius)));
+  const count = slice ? 2 : 12;
+  for (let layer = 0; layer < density; layer++) {
+    const fromEnd = layer === density - 1;
+    const targetPeak = 0.34 + (outerPeak - 0.34) * (layer + 1) / density;
+    const x = fromEnd ? -1.68 : sideSeedX(targetPeak);
     for (let j = 0; j < count; j++) {
-      const phi = slice ? Math.PI / 2 + j * Math.PI : j * 2 * Math.PI / count + (layer % 2) * Math.PI / count;
-      const pts = traceLine(new THREE.Vector3(seed.x, seed.radius * Math.cos(phi), seed.radius * Math.sin(phi)));
-      if (pts.length >= 20) addFieldLine(pts);
-    }
-    const endRadius = 0.16 + (density === 1 ? 0 : layer * 0.14 / (density - 1));
-    const endCount = slice ? 2 : 6 + density;
-    for (let j = 0; j < endCount; j++) {
-      const phi = slice ? Math.PI / 2 + j * Math.PI : j * 2 * Math.PI / endCount + (layer % 2) * Math.PI / endCount;
-      const y = endRadius * Math.cos(phi), z = endRadius * Math.sin(phi);
-      const pts = traceLine(new THREE.Vector3(-1.68, y, z));
-      pts.unshift(new THREE.Vector3(-1.65, y, z));
+      const phi = slice ? Math.PI / 2 + j * Math.PI : j * 2 * Math.PI / count;
+      const cos = Math.cos(phi), sin = Math.sin(phi);
+      // Start just outside the rectangular long face, including diagonal views.
+      const sideRadius = Math.min(0.34 / Math.max(Math.abs(cos), 1e-6), 0.325 / Math.max(Math.abs(sin), 1e-6)) + 0.01;
+      const radius = fromEnd ? endRadius : sideRadius;
+      const y = radius * cos, z = radius * sin;
+      const pts = traceLine(new THREE.Vector3(x, y, z));
+      if (fromEnd) pts.unshift(new THREE.Vector3(-1.65, y, z));
       if (pts.length >= 20) addFieldLine(pts);
     }
   }
