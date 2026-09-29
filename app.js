@@ -30,8 +30,11 @@ const rim = new THREE.DirectionalLight(0x78b9ff, 1.3);
 rim.position.set(3, -2, -5);
 scene.add(rim);
 
+// All teaching objects share one transform so moving the magnet also moves its field and planes.
+const modelRoot = new THREE.Group();
+scene.add(modelRoot);
 const magnet = new THREE.Group();
-scene.add(magnet);
+modelRoot.add(magnet);
 const bodyGeometry = new THREE.BoxGeometry(1.65, 0.68, 0.65);
 const red = new THREE.MeshStandardMaterial({ color: 0xc63336, roughness: 0.48, metalness: 0.08 });
 const blue = new THREE.MeshStandardMaterial({ color: 0x244c78, roughness: 0.48, metalness: 0.08 });
@@ -92,7 +95,7 @@ function textSprite(label, color) {
 }
 const nTag = textSprite('N', '#fb7773'); nTag.position.set(-1.9, 0.53, 0.1);
 const sTag = textSprite('S', '#88bdf6'); sTag.position.set(1.9, 0.53, 0.1);
-scene.add(nTag, sTag);
+modelRoot.add(nTag, sTag);
 
 // The reference plane passes through the magnet's geometric mid-height (y = 0).
 const grid = new THREE.GridHelper(9.6, 24, 0x547f96, 0x294b61);
@@ -100,14 +103,14 @@ grid.position.y = 0;
 grid.material.transparent = true;
 grid.material.opacity = 0.37;
 grid.material.depthWrite = false;
-scene.add(grid);
+modelRoot.add(grid);
 const gridWash = new THREE.Mesh(
   new THREE.PlaneGeometry(9.6, 9.6),
   new THREE.MeshBasicMaterial({ color: 0x16435a, transparent: true, opacity: 0.045, side: THREE.DoubleSide, depthWrite: false })
 );
 gridWash.rotation.x = -Math.PI / 2;
 gridWash.position.y = -0.003;
-scene.add(gridWash);
+modelRoot.add(gridWash);
 // A vertical sheet at x = 0 bisects the bar magnet into equal left and right halves.
 const verticalPaper = new THREE.Group();
 const paperFill = new THREE.Mesh(
@@ -117,17 +120,17 @@ const paperFill = new THREE.Mesh(
 paperFill.rotation.y = Math.PI / 2;
 verticalPaper.add(paperFill);
 verticalPaper.visible = false;
-scene.add(verticalPaper);
+modelRoot.add(verticalPaper);
 const midline = new THREE.Line(
   new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, -0.75, 0), new THREE.Vector3(0, 0.75, 0)]),
   new THREE.LineDashedMaterial({ color: 0xf0f6fa, dashSize: 0.10, gapSize: 0.08, transparent: true, opacity: 0.65 })
 );
 midline.computeLineDistances();
-scene.add(midline);
+modelRoot.add(midline);
 
-const fieldGroup = new THREE.Group(); scene.add(fieldGroup);
-const arrowGroup = new THREE.Group(); scene.add(arrowGroup);
-const paperMarks = new THREE.Group(); scene.add(paperMarks);
+const fieldGroup = new THREE.Group(); modelRoot.add(fieldGroup);
+const arrowGroup = new THREE.Group(); modelRoot.add(arrowGroup);
+const paperMarks = new THREE.Group(); modelRoot.add(paperMarks);
 const lineMaterial = new THREE.MeshBasicMaterial({ color: 0xa9d7e4, transparent: true, opacity: 0.56, depthWrite: false });
 const arrowMaterial = new THREE.MeshBasicMaterial({ color: 0xffd99b });
 function symbolMaterial(symbol) {
@@ -278,7 +281,7 @@ function updateVisibility() {
 function updateMarkerFacing() {
   if (!paperMarks.visible) return;
   scene.updateMatrixWorld(true);
-  const side = scene.worldToLocal(camera.position.clone()).x;
+  const side = modelRoot.worldToLocal(camera.position.clone()).x;
   if (Math.abs(side) > 0.02) observerSide = Math.sign(side);
   for (const mark of paperMarks.children) {
     mark.material = mark.userData.fieldNormal * observerSide > 0 ? dotSymbol : crossSymbol;
@@ -305,13 +308,89 @@ document.querySelector('#lines').addEventListener('input', event => {
 });
 for (const id of ['arrows', 'vertical-paper', 'paper-marks']) document.querySelector('#' + id).addEventListener('input', updateVisibility);
 
+const dragRaycaster = new THREE.Raycaster();
+const dragPointer = new THREE.Vector2();
+const dragPlane = new THREE.Plane();
+const dragPoint = new THREE.Vector3();
+let dragState = null;
+function pointRayAt(event) {
+  const rect = renderer.domElement.getBoundingClientRect();
+  dragPointer.set(
+    (event.clientX - rect.left) / rect.width * 2 - 1,
+    -(event.clientY - rect.top) / rect.height * 2 + 1
+  );
+  camera.updateMatrixWorld();
+  dragRaycaster.setFromCamera(dragPointer, camera);
+}
+function overMagnet(event) {
+  pointRayAt(event);
+  modelRoot.updateWorldMatrix(true, true);
+  return dragRaycaster.intersectObjects([left, right], false).length > 0;
+}
+function finishMagnetDrag(event) {
+  if (!dragState || (event && event.pointerId !== dragState.pointerId)) return;
+  const pointerId = dragState.pointerId;
+  controls.enabled = dragState.controlsEnabled;
+  controls.enableDamping = dragState.dampingEnabled;
+  dragState = null;
+  renderer.domElement.style.cursor = '';
+  if (renderer.domElement.hasPointerCapture(pointerId)) renderer.domElement.releasePointerCapture(pointerId);
+  if (event) { event.preventDefault(); event.stopImmediatePropagation(); }
+}
+renderer.domElement.addEventListener('pointerdown', event => {
+  if (event.button !== 2 || !overMagnet(event)) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  const dampingEnabled = controls.enableDamping;
+  controls.enableDamping = false;
+  controls.update();
+  pointRayAt(event);
+  const center = modelRoot.getWorldPosition(new THREE.Vector3());
+  const normal = camera.getWorldDirection(new THREE.Vector3());
+  dragPlane.setFromNormalAndCoplanarPoint(normal, center);
+  if (!dragRaycaster.ray.intersectPlane(dragPlane, dragPoint)) {
+    controls.enableDamping = dampingEnabled;
+    return;
+  }
+  dragState = {
+    pointerId: event.pointerId,
+    startPoint: dragPoint.clone(),
+    startPosition: modelRoot.position.clone(),
+    controlsEnabled: controls.enabled,
+    dampingEnabled
+  };
+  controls.enabled = false;
+  renderer.domElement.setPointerCapture(event.pointerId);
+  renderer.domElement.style.cursor = 'grabbing';
+}, true);
+renderer.domElement.addEventListener('pointermove', event => {
+  if (!dragState) {
+    if (event.pointerType === 'mouse') renderer.domElement.style.cursor = overMagnet(event) ? 'move' : '';
+    return;
+  }
+  if (event.pointerId !== dragState.pointerId) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  pointRayAt(event);
+  if (!dragRaycaster.ray.intersectPlane(dragPlane, dragPoint)) return;
+  const parentRotation = scene.getWorldQuaternion(new THREE.Quaternion()).invert();
+  const delta = dragPoint.clone().sub(dragState.startPoint).applyQuaternion(parentRotation);
+  modelRoot.position.copy(dragState.startPosition).add(delta);
+}, true);
+renderer.domElement.addEventListener('pointerup', finishMagnetDrag, true);
+renderer.domElement.addEventListener('pointercancel', finishMagnetDrag, true);
+renderer.domElement.addEventListener('lostpointercapture', finishMagnetDrag, true);
+renderer.domElement.addEventListener('contextmenu', event => event.preventDefault());
+window.addEventListener('blur', () => finishMagnetDrag());
+
 function setCameraView(position) {
   // Flush gesture inertia before moving the camera so a previous pan cannot shift the new view.
   const damping = controls.enableDamping;
   controls.enableDamping = false;
   controls.update();
-  controls.target.set(0, 0, 0);
-  camera.position.set(...position);
+  const center = modelRoot.getWorldPosition(new THREE.Vector3());
+  controls.target.copy(center);
+  camera.position.copy(center).add(new THREE.Vector3(...position));
   camera.zoom = initialCameraZoom;
   camera.updateProjectionMatrix();
   controls.update();
@@ -328,9 +407,11 @@ const resetOptionIds = ['lines', 'arrows', 'slice', 'space-lines', 'vertical-pap
 const initialOptions = Object.fromEntries(resetOptionIds.map(id => [id, document.querySelector('#' + id).checked]));
 const initialDensity = document.querySelector('#density').value;
 document.querySelector('#reset').addEventListener('click', () => {
+  finishMagnetDrag();
   for (const id of resetOptionIds) document.querySelector('#' + id).checked = initialOptions[id];
   document.querySelector('#density').value = initialDensity;
-  scene.rotation.set(0, 0, 0);
+  modelRoot.position.set(0, 0, 0);
+  modelRoot.rotation.set(0, 0, 0);
   observerSide = 1;
   const damping = controls.enableDamping;
   controls.enableDamping = false;
@@ -363,7 +444,7 @@ else window.addEventListener('resize', resize);
 resize(); rebuild();
 function animate() {
   requestAnimationFrame(animate);
-  if (document.querySelector('#auto').checked) scene.rotation.y += 0.0018;
+  if (document.querySelector('#auto').checked && !dragState) modelRoot.rotation.y += 0.0018;
   controls.update(); updateMarkerFacing(); renderer.render(scene, camera);
 }
 animate();
