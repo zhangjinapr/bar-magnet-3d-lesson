@@ -221,7 +221,8 @@ function addFieldLine(pts) {
 function radialPeak(points) {
   return Math.max(...points.map(p => Math.hypot(p.y, p.z)));
 }
-// Find a long-face seed for a chosen distance from the magnet in the midplane.
+// Place one streamline in each visible radial band. The outermost band starts
+// on the N end face; the remaining bands start on a long face of the magnet.
 function sideSeedX(targetPeak) {
   let nearEnd = -1.649, nearMiddle = -0.35;
   for (let i = 0; i < 13; i++) {
@@ -231,16 +232,6 @@ function sideSeedX(targetPeak) {
     else nearMiddle = x;
   }
   return (nearEnd + nearMiddle) / 2;
-}
-function clipAtDistance(points, limit) {
-  for (let i = 1; i < points.length; i++) {
-    if (points[i].length() >= limit) {
-      const a = points[i - 1], b = points[i];
-      const fraction = (limit - a.length()) / (b.length() - a.length());
-      return [...points.slice(0, i), a.clone().lerp(b, fraction)];
-    }
-  }
-  return points;
 }
 function rebuild() {
   clearGroup(fieldGroup); clearGroup(arrowGroup); paperMarks.clear();
@@ -252,44 +243,23 @@ function rebuild() {
     updateVisibility();
     return;
   }
+  const endRadius = 0.30;
+  const outerPeak = radialPeak(traceLine(new THREE.Vector3(-1.68, 0, endRadius)));
   const count = slice ? 2 : 12;
-  const endLayers = Math.min(3, Math.ceil(density / 3));
-  const sideLayers = density - endLayers;
-  // The slider counts all visible bands: long-face arches, an end-face arch,
-  // and the wider end-face rays that continue beyond the displayed region.
-  for (let layer = 0; layer < sideLayers; layer++) {
-    const targetPeak = 0.34 + (2.8 - 0.34) * (layer + 1) / (sideLayers + 1);
-    const x = sideSeedX(targetPeak);
+  for (let layer = 0; layer < density; layer++) {
+    const fromEnd = layer === density - 1;
+    const targetPeak = 0.34 + (outerPeak - 0.34) * (layer + 1) / density;
+    const x = fromEnd ? -1.68 : sideSeedX(targetPeak);
     for (let j = 0; j < count; j++) {
       const phi = slice ? Math.PI / 2 + j * Math.PI : j * 2 * Math.PI / count;
       const cos = Math.cos(phi), sin = Math.sin(phi);
       // Start just outside the rectangular long face, including diagonal views.
       const sideRadius = Math.min(0.34 / Math.max(Math.abs(cos), 1e-6), 0.325 / Math.max(Math.abs(sin), 1e-6)) + 0.01;
-      const pts = traceLine(new THREE.Vector3(x, sideRadius * cos, sideRadius * sin));
+      const radius = fromEnd ? endRadius : sideRadius;
+      const y = radius * cos, z = radius * sin;
+      const pts = traceLine(new THREE.Vector3(x, y, z));
+      if (fromEnd) pts.unshift(new THREE.Vector3(-1.65, y, z));
       if (pts.length >= 20) addFieldLine(pts);
-    }
-  }
-  if (endLayers >= 2) {
-    for (let j = 0; j < count; j++) {
-      const phi = slice ? Math.PI / 2 + j * Math.PI : j * 2 * Math.PI / count;
-      const y = 0.30 * Math.cos(phi), z = 0.30 * Math.sin(phi);
-      const pts = traceLine(new THREE.Vector3(-1.68, y, z));
-      pts.unshift(new THREE.Vector3(-1.65, y, z));
-      if (pts.length >= 20) addFieldLine(pts);
-    }
-  }
-  const rayLayers = endLayers - (endLayers >= 2 ? 1 : 0);
-  for (let layer = 0; layer < rayLayers; layer++) {
-    const radius = rayLayers === 1 ? 0.055 : 0.035 + layer * 0.04;
-    for (let j = 0; j < count; j++) {
-      const phi = slice ? Math.PI / 2 + j * Math.PI : j * 2 * Math.PI / count;
-      const y = radius * Math.cos(phi), z = radius * Math.sin(phi);
-      const outgoing = clipAtDistance(traceLine(new THREE.Vector3(-1.68, y, z)), 4.3);
-      outgoing.unshift(new THREE.Vector3(-1.65, y, z));
-      if (outgoing.length < 20) continue;
-      addFieldLine(outgoing);
-      // The matching segment approaches the S end face in the same field direction.
-      addFieldLine(outgoing.map(p => new THREE.Vector3(-p.x, p.y, p.z)).reverse());
     }
   }
   // The axial field points away from N and toward S; these rays continue beyond the view.
