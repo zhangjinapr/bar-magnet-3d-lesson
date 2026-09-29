@@ -173,13 +173,50 @@ function traceLine(start) {
     const k4 = direction(p.clone().addScaledVector(k3, h));
     const next = p.clone().addScaledVector(k1, h / 6).addScaledVector(k2, h / 3)
       .addScaledVector(k3, h / 3).addScaledVector(k4, h / 6);
-    // Stop at the south pole surface; exterior lines must not pass through the solid magnet.
-    if (next.x > 0.8 && next.x < 1.66 && Math.abs(next.y) < 0.34 && Math.abs(next.z) < 0.325) break;
+    // Clip at the magnet surface; the outside segment must not run through the solid.
+    if (Math.abs(next.x) < 1.651 && Math.abs(next.y) < 0.34 && Math.abs(next.z) < 0.325) {
+      let outside = 0, inside = 1;
+      for (let step = 0; step < 10; step++) {
+        const middle = (outside + inside) / 2;
+        const point = p.clone().lerp(next, middle);
+        if (Math.abs(point.x) < 1.651 && Math.abs(point.y) < 0.34 && Math.abs(point.z) < 0.325) inside = middle;
+        else outside = middle;
+      }
+      points.push(p.clone().lerp(next, outside));
+      break;
+    }
     p = next;
     points.push(p.clone());
-    if (p.distanceTo(south) < 0.39 || p.length() > 8) break;
+    if (p.length() > 8) break;
   }
   return points;
+}
+function addFieldLine(pts) {
+  if (pts.length < 2) return;
+  const curve = new THREE.CatmullRomCurve3(pts);
+  const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, Math.min(180, Math.max(16, pts.length)), 0.005, 5, false), lineMaterial);
+  fieldGroup.add(tube);
+  for (let k = 1; k < pts.length; k++) {
+    if (pts[k - 1].x <= 0 && pts[k].x >= 0) {
+      const fraction = -pts[k - 1].x / (pts[k].x - pts[k - 1].x);
+      const hit = pts[k - 1].clone().lerp(pts[k], fraction);
+      // Only intersections within the finite white sheet receive a dot or cross.
+      if (Math.abs(hit.y) <= 3 && Math.abs(hit.z) <= 3.5) {
+        const mark = new THREE.Sprite(dotSymbol);
+        mark.position.copy(hit);
+        mark.scale.set(0.30, 0.30, 1);
+        mark.renderOrder = 10;
+        mark.userData.fieldNormal = Math.sign(fieldAt(hit).x);
+        paperMarks.add(mark);
+      }
+      break;
+    }
+  }
+  const pos = curve.getPointAt(0.55);
+  const tangent = curve.getTangentAt(0.55).normalize();
+  const cone = new THREE.Mesh(new THREE.ConeGeometry(0.030, 0.105, 8), arrowMaterial);
+  cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), tangent);
+  cone.position.copy(pos); arrowGroup.add(cone);
 }
 function rebuild() {
   clearGroup(fieldGroup); clearGroup(arrowGroup); paperMarks.clear();
@@ -193,7 +230,7 @@ function rebuild() {
   }
   const seeds = Array.from({ length: density }, (_, i) => ({
     x: -1.46 - 0.025 * i,
-    radius: 0.50 + 0.055 * i
+    radius: 0.345 + 0.08 * i / (density - 1)
   }));
   for (let layer = 0; layer < seeds.length; layer++) {
     const seed = seeds[layer];
@@ -201,31 +238,21 @@ function rebuild() {
     for (let j = 0; j < count; j++) {
       const phi = slice ? Math.PI / 2 + j * Math.PI : j * 2 * Math.PI / count + (layer % 2) * Math.PI / count;
       const pts = traceLine(new THREE.Vector3(seed.x, seed.radius * Math.cos(phi), seed.radius * Math.sin(phi)));
-      if (pts.length < 20) continue;
-      const curve = new THREE.CatmullRomCurve3(pts);
-      const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, Math.min(180, pts.length), 0.005, 5, false), lineMaterial);
-      fieldGroup.add(tube);
-      for (let k = 1; k < pts.length; k++) {
-        if (pts[k - 1].x <= 0 && pts[k].x >= 0) {
-          const fraction = -pts[k - 1].x / (pts[k].x - pts[k - 1].x);
-          const hit = pts[k - 1].clone().lerp(pts[k], fraction);
-          const mark = new THREE.Sprite(dotSymbol);
-          mark.position.copy(hit);
-          mark.scale.set(0.30, 0.30, 1);
-          mark.renderOrder = 10;
-          mark.userData.fieldNormal = Math.sign(fieldAt(hit).x);
-          paperMarks.add(mark);
-          break;
-        }
-      }
-      const t = 0.55;
-      const pos = curve.getPointAt(t);
-      const tangent = curve.getTangentAt(t).normalize();
-      const cone = new THREE.Mesh(new THREE.ConeGeometry(0.030, 0.105, 8), arrowMaterial);
-      cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), tangent);
-      cone.position.copy(pos); arrowGroup.add(cone);
+      if (pts.length >= 20) addFieldLine(pts);
+    }
+    const endRadius = 0.16 + (density === 1 ? 0 : layer * 0.14 / (density - 1));
+    const endCount = slice ? 2 : 6 + density;
+    for (let j = 0; j < endCount; j++) {
+      const phi = slice ? Math.PI / 2 + j * Math.PI : j * 2 * Math.PI / endCount + (layer % 2) * Math.PI / endCount;
+      const y = endRadius * Math.cos(phi), z = endRadius * Math.sin(phi);
+      const pts = traceLine(new THREE.Vector3(-1.68, y, z));
+      pts.unshift(new THREE.Vector3(-1.65, y, z));
+      if (pts.length >= 20) addFieldLine(pts);
     }
   }
+  // The axial field points away from N and toward S; these rays continue beyond the view.
+  addFieldLine([new THREE.Vector3(-1.65, 0, 0), new THREE.Vector3(-3.6, 0, 0)]);
+  addFieldLine([new THREE.Vector3(3.6, 0, 0), new THREE.Vector3(1.65, 0, 0)]);
   updateVisibility();
   document.querySelector('#density-value').textContent = density;
 }
@@ -282,7 +309,7 @@ document.querySelectorAll('[data-view]').forEach(btn => btn.addEventListener('cl
   document.querySelectorAll('[data-view]').forEach(x => x.classList.remove('active'));
   btn.classList.add('active');
   const v = btn.dataset.view;
-  const target = v === 'top' ? [0, 7.9, 0.01] : v === 'side' ? [0, 0.01, 8.6] : [2.2, 3.2, 9.6];
+  const target = v === 'top' ? [0, 10.6, 0.01] : v === 'side' ? [0, 0.01, 10.6] : [2.2, 3.2, 9.6];
   setCameraView(target);
 }));
 const resetOptionIds = ['lines', 'arrows', 'slice', 'space-lines', 'vertical-paper', 'paper-marks', 'auto'];
@@ -315,7 +342,7 @@ function resize() {
   controls.maxTargetRadius = mobile ? 0 : Infinity;
   if (mobile && !mobileCameraMode) {
     const view = document.querySelector('.viewbar .active')?.dataset.view;
-    setCameraView(view === 'top' ? [0, 7.9, 0.01] : view === 'side' ? [0, 0.01, 8.6] : [2.2, 3.2, 9.6]);
+    setCameraView(view === 'top' ? [0, 10.6, 0.01] : view === 'side' ? [0, 0.01, 10.6] : [2.2, 3.2, 9.6]);
   }
   mobileCameraMode = mobile;
 }
