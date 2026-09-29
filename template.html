@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>条形磁铁的 3D 磁场 · 互动课件</title>
+<style>
+  :root { color-scheme: dark; --bg:#07111f; --panel:#0e2032; --line:#24405a; --text:#eaf5ff; --muted:#9eb8cc; --cyan:#5adce3; --gold:#ffdc94; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; min-height:100%; font-family:"Microsoft YaHei","PingFang SC",Arial,sans-serif; background:var(--bg); color:var(--text); }
+  body { background:radial-gradient(ellipse at 54% 20%,#16334b 0%,#091929 43%,#06101c 85%); }
+  .shell { display:grid; grid-template-columns:minmax(0,1fr) 310px; grid-template-rows:auto minmax(0,1fr) auto; min-height:100vh; }
+  header { grid-column:1/-1; display:flex; align-items:flex-end; justify-content:space-between; gap:20px; padding:24px 32px 18px; border-bottom:1px solid rgba(143,207,235,.15); }
+  h1 { margin:0; font-size:clamp(25px,3vw,38px); letter-spacing:.02em; font-weight:800; }
+  h1 span { color:var(--cyan); }
+  header p { margin:6px 0 0; color:var(--muted); font-size:14px; }
+  .tagline { color:var(--gold); font-weight:700; font-size:14px; text-align:right; white-space:nowrap; }
+  main { position:relative; min-height:610px; overflow:hidden; }
+  #stage { position:absolute; inset:0; cursor:grab; }
+  #stage:active { cursor:grabbing; }
+  .stage-note { position:absolute; bottom:22px; left:27px; padding:11px 15px; border:1px solid rgba(137,198,224,.24); border-radius:11px; background:rgba(6,18,30,.68); color:#c3d9e7; font-size:13px; pointer-events:none; backdrop-filter:blur(6px); }
+  .stage-note b { color:#fff; }
+  .viewbar { position:absolute; top:24px; left:25px; display:flex; gap:7px; padding:5px; border:1px solid rgba(137,198,224,.18); border-radius:12px; background:rgba(5,17,29,.74); }
+  button { font:inherit; cursor:pointer; }
+  .viewbar button,.reset { border:0; border-radius:8px; background:transparent; color:#c5deea; padding:8px 13px; font-size:13px; }
+  .viewbar button.active,.viewbar button:hover { background:#1b6474; color:#fff; }
+  .axis { position:absolute; top:86px; left:28px; display:flex; align-items:center; gap:10px; font-size:12px; color:#b2c9da; pointer-events:none; }
+  .axis i { display:block; height:3px; width:34px; background:linear-gradient(90deg,#fb7773,#8dbcf2); border-radius:5px; }
+  aside { border-left:1px solid rgba(143,207,235,.16); background:rgba(8,24,39,.78); padding:25px 24px; overflow:auto; }
+  .section-label { display:block; color:#72bfc9; font-size:12px; letter-spacing:.14em; font-weight:800; margin-bottom:12px; }
+  aside h2 { font-size:18px; margin:0 0 15px; }
+  .control { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid rgba(139,184,207,.12); font-size:14px; }
+  .control label { cursor:pointer; }
+  input[type=checkbox] { width:18px; height:18px; accent-color:#56d2dc; cursor:pointer; }
+  input[type=range] { width:100%; accent-color:#56d2dc; cursor:pointer; }
+  .range { display:block; padding:16px 0 13px; }
+  .range-head { display:flex; justify-content:space-between; margin-bottom:10px; font-size:14px; }
+  .range-head strong { color:var(--cyan); }
+  .reset { border:1px solid #41788c; width:100%; margin-top:17px; padding:10px; }
+  .reset:hover { background:#143d52; }
+  .lesson { margin-top:27px; }
+  .lesson ol { padding-left:22px; margin:0; }
+  .lesson li { margin:0 0 12px; color:#c9dbe7; font-size:14px; line-height:1.65; }
+  .lesson strong { color:#fff; }
+  .formula { margin-top:18px; background:#102a3e; border-left:3px solid var(--cyan); border-radius:4px 8px 8px 4px; padding:11px 12px; color:#e2f4fb; line-height:1.6; font-size:14px; }
+  footer { grid-column:1/-1; display:flex; justify-content:space-between; gap:15px; border-top:1px solid rgba(143,207,235,.14); color:#91aebf; padding:13px 27px; font-size:12px; }
+  footer b { color:#d5eaf4; }
+  @media(max-width:900px){ .shell{grid-template-columns:1fr;grid-template-rows:auto minmax(500px,65vh) auto auto;} main{min-height:500px;} aside{border-left:0;border-top:1px solid rgba(143,207,235,.16);display:grid;grid-template-columns:1fr 1fr;gap:0 28px;} .lesson{margin-top:0;} }
+  @media(max-width:620px){header{padding:20px;display:block;} .tagline{text-align:left;margin-top:10px;} main{min-height:440px;} .stage-note{left:14px;right:14px;bottom:14px;font-size:12px;} .viewbar{left:14px;top:15px;} .axis{left:18px;top:76px;} aside{display:block;padding:22px 20px;} .lesson{margin-top:27px;} footer{display:block;padding:14px 20px;} footer span{display:block;margin:3px 0;} }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header><div><h1>条形磁铁的 <span>3D 磁场</span></h1><p>旋转视角，观察磁感线如何环绕磁体</p></div><div class="tagline">初中物理 · 课堂互动演示</div></header>
+  <main>
+    <div id="stage" aria-label="可旋转的条形磁铁三维磁场"></div>
+    <div class="viewbar" aria-label="视角"><button class="active" data-view="free">斜视角</button><button data-view="top">俯视</button><button data-view="side">正视</button></div>
+    <div class="axis"><i></i>左红色端 N　→　右蓝色端 S</div>
+    <div class="stage-note"><b>操作：</b>拖动旋转 · 滚轮缩放 · 右键平移　｜　水平网格穿过磁铁的中间高度</div>
+  </main>
+  <aside>
+    <div>
+      <span class="section-label">互动控制</span><h2>观察磁场</h2>
+      <div class="control"><label for="lines">显示磁感线</label><input id="lines" type="checkbox" checked></div>
+      <div class="control"><label for="arrows">显示方向箭头</label><input id="arrows" type="checkbox" checked></div>
+      <div class="control"><label for="slice">只看水平剖面</label><input id="slice" type="checkbox" checked></div>
+      <div class="control"><label for="space-lines">显示3D空间磁感线</label><input id="space-lines" type="checkbox"></div>
+      <div class="control"><label for="vertical-paper">竖直纸面</label><input id="vertical-paper" type="checkbox"></div>
+      <div class="control"><label for="paper-marks">显示纸面交点 · / ×</label><input id="paper-marks" type="checkbox" checked></div>
+      <div class="control"><label for="auto">自动旋转</label><input id="auto" type="checkbox"></div>
+      <label class="range" for="density"><span class="range-head"><span>磁感线层数</span><strong id="density-value">2</strong></span><input id="density" type="range" min="2" max="7" value="2"></label>
+      <button class="reset" id="reset">复位</button>
+    </div>
+    <div class="lesson"><span class="section-label">课堂提示</span><h2>从实验走向空间想象</h2><ol>
+      <li><strong>联系铁屑实验：</strong>铁屑在纸面上排列，显示的是磁场在一个平面附近的分布。</li>
+      <li><strong>转动模型：</strong>水平网格位于磁铁厚度的中间高度；竖直纸面穿过磁铁中心，将红、蓝两半分开。</li>
+      <li><strong>看方向：</strong>磁体外部的磁感线由 N 极指向 S 极；磁体内部由 S 极回到 N 极，形成闭合曲线。</li>
+      <li><strong>看纸面交点：</strong>· 表示磁场穿出纸面、朝向观察者；× 表示穿入纸面、远离观察者。换到纸面另一侧时符号会互换。</li>
+    </ol><div class="formula">想一想：从水平剖面切换到 3D 空间后，为什么能看到更多磁感线？</div></div>
+  </aside>
+  <footer><span><b>说明：</b>磁感线是描述磁场的模型，不是真实存在的线。</span><span>理想化磁铁模型 · 红端 N、蓝端 S 为教学约定 · 离线可用</span></footer>
+</div>
+<script>{{APP_JS}}</script>
+</body>
+</html>
