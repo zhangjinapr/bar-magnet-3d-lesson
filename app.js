@@ -20,6 +20,7 @@ controls.saveState();
 const initialCameraPosition = camera.position.clone();
 const initialCameraTarget = controls.target.clone();
 const initialCameraZoom = camera.zoom;
+let mobileCameraMode = false;
 
 scene.add(new THREE.AmbientLight(0xffffff, 1.25));
 const lamp = new THREE.DirectionalLight(0xffffff, 2.1);
@@ -254,12 +255,24 @@ document.querySelector('#lines').addEventListener('input', event => {
 });
 for (const id of ['arrows', 'vertical-paper', 'paper-marks']) document.querySelector('#' + id).addEventListener('input', updateVisibility);
 
+function setCameraView(position) {
+  // Flush gesture inertia before moving the camera so a previous pan cannot shift the new view.
+  const damping = controls.enableDamping;
+  controls.enableDamping = false;
+  controls.update();
+  controls.target.set(0, 0, 0);
+  camera.position.set(...position);
+  camera.zoom = initialCameraZoom;
+  camera.updateProjectionMatrix();
+  controls.update();
+  controls.enableDamping = damping;
+}
 document.querySelectorAll('[data-view]').forEach(btn => btn.addEventListener('click', () => {
   document.querySelectorAll('[data-view]').forEach(x => x.classList.remove('active'));
   btn.classList.add('active');
   const v = btn.dataset.view;
   const target = v === 'top' ? [0, 7.9, 0.01] : v === 'side' ? [0, 0.01, 8.6] : [2.2, 3.2, 9.6];
-  camera.position.set(...target); controls.target.set(0, 0, 0); controls.update();
+  setCameraView(target);
 }));
 const resetOptionIds = ['lines', 'arrows', 'slice', 'space-lines', 'vertical-paper', 'paper-marks', 'auto'];
 const initialOptions = Object.fromEntries(resetOptionIds.map(id => [id, document.querySelector('#' + id).checked]));
@@ -285,6 +298,14 @@ document.querySelector('#reset').addEventListener('click', () => {
 function resize() {
   const w = mount.clientWidth, h = mount.clientHeight;
   renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  const mobile = matchMedia('(pointer: coarse)').matches || w <= 620;
+  controls.enablePan = !mobile;
+  controls.maxTargetRadius = mobile ? 0 : Infinity;
+  if (mobile && !mobileCameraMode) {
+    const view = document.querySelector('.viewbar .active')?.dataset.view;
+    setCameraView(view === 'top' ? [0, 7.9, 0.01] : view === 'side' ? [0, 0.01, 8.6] : [2.2, 3.2, 9.6]);
+  }
+  mobileCameraMode = mobile;
 }
 new ResizeObserver(resize).observe(mount); resize(); rebuild();
 function animate() {
