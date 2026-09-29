@@ -308,7 +308,8 @@ document.querySelector('#reset').addEventListener('click', () => {
 
 function resize() {
   const w = mount.clientWidth, h = mount.clientHeight;
-  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  // setSize also fixes the canvas CSS size; its drawing buffer scales separately with DPR.
+  renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
   const mobile = matchMedia('(pointer: coarse)').matches || w <= 620;
   controls.enablePan = !mobile;
   controls.maxTargetRadius = mobile ? 0 : Infinity;
