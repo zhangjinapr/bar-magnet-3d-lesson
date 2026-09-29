@@ -9,7 +9,7 @@
   * { box-sizing:border-box; }
   html,body { margin:0; min-height:100%; font-family:"Microsoft YaHei","PingFang SC",Arial,sans-serif; background:var(--bg); color:var(--text); }
   body { background:radial-gradient(ellipse at 54% 20%,#16334b 0%,#091929 43%,#06101c 85%); }
-  .shell { display:grid; grid-template-columns:minmax(0,1fr) 310px; grid-template-rows:auto minmax(0,1fr) auto; min-height:100vh; }
+  .shell { display:grid; grid-template-columns:minmax(0,1fr) 310px; grid-template-rows:auto minmax(0,1fr) auto auto; min-height:100vh; }
   header { grid-column:1/-1; display:flex; align-items:flex-end; justify-content:space-between; gap:20px; padding:24px 32px 18px; border-bottom:1px solid rgba(143,207,235,.15); }
   h1 { margin:0; font-size:clamp(25px,3vw,38px); letter-spacing:.02em; font-weight:800; }
   h1 span { color:var(--cyan); }
@@ -43,10 +43,20 @@
   .lesson li { margin:0 0 12px; color:#c9dbe7; font-size:14px; line-height:1.65; }
   .lesson strong { color:#fff; }
   .formula { margin-top:18px; background:#102a3e; border-left:3px solid var(--cyan); border-radius:4px 8px 8px 4px; padding:11px 12px; color:#e2f4fb; line-height:1.6; font-size:14px; }
+  .community { grid-column:1/-1; padding:34px clamp(20px,4vw,54px) 40px; border-top:1px solid rgba(143,207,235,.14); background:#0a1b2b; }
+  .community-head { max-width:720px; margin-bottom:23px; }
+  .community h2 { margin:0 0 9px; font-size:clamp(20px,2.5vw,27px); }
+  .community p { color:#b8d0df; line-height:1.7; margin:0; font-size:14px; }
+  .community-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; max-width:920px; }
+  .community-card { border:1px solid rgba(143,207,235,.18); border-radius:15px; padding:20px; background:#10283b; }
+  .community-card h3 { margin:0 0 9px; font-size:17px; }
+  .community-card img { display:block; width:min(100%,230px); aspect-ratio:1; margin:17px auto 0; background:#fff; border:9px solid #fff; border-radius:10px; }
+  .community-link { margin-top:20px!important; }
+  .community a,footer a { color:#74dce3; text-underline-offset:3px; }
   footer { grid-column:1/-1; display:flex; justify-content:space-between; gap:15px; border-top:1px solid rgba(143,207,235,.14); color:#91aebf; padding:13px 27px; font-size:12px; }
   footer b { color:#d5eaf4; }
-  @media(max-width:900px){ .shell{grid-template-columns:1fr;grid-template-rows:auto minmax(500px,65vh) auto auto;} main{min-height:500px;} aside{border-left:0;border-top:1px solid rgba(143,207,235,.16);display:grid;grid-template-columns:1fr 1fr;gap:0 28px;} .lesson{margin-top:0;} }
-  @media(max-width:620px){header{padding:20px;display:block;} .tagline{text-align:left;margin-top:10px;} main{min-height:440px;} .stage-note{left:14px;right:14px;bottom:14px;font-size:12px;} .viewbar{left:14px;top:15px;} .axis{left:18px;top:76px;} aside{display:block;padding:22px 20px;} .lesson{margin-top:27px;} footer{display:block;padding:14px 20px;} footer span{display:block;margin:3px 0;} }
+  @media(max-width:900px){ .shell{grid-template-columns:1fr;grid-template-rows:auto minmax(500px,65vh) auto auto auto;} main{min-height:500px;} aside{border-left:0;border-top:1px solid rgba(143,207,235,.16);display:grid;grid-template-columns:1fr 1fr;gap:0 28px;} .lesson{margin-top:0;} }
+  @media(max-width:620px){header{padding:20px;display:block;} .tagline{text-align:left;margin-top:10px;} main{min-height:440px;} .stage-note{left:14px;right:14px;bottom:14px;font-size:12px;} .viewbar{left:14px;top:15px;} .axis{left:18px;top:76px;} aside{display:block;padding:22px 20px;} .lesson{margin-top:27px;} .community-grid{grid-template-columns:1fr;} footer{display:block;padding:14px 20px;} footer span{display:block;margin:3px 0;} }
 </style>
 </head>
 <body>
@@ -78,7 +88,15 @@
       <li><strong>看纸面交点：</strong>· 表示磁场穿出纸面、朝向观察者；× 表示穿入纸面、远离观察者。换到纸面另一侧时符号会互换。</li>
     </ol><div class="formula">想一想：从水平剖面切换到 3D 空间后，为什么能看到更多磁感线？</div></div>
   </aside>
-  <footer><span><b>说明：</b>磁感线是描述磁场的模型，不是真实存在的线。</span><span>© 2026 张专注物理 · 开放网页使用 · 代码权利保留</span></footer>
+  <section class="community" id="support" aria-labelledby="support-title">
+    <div class="community-head"><span class="section-label">开放课件 · 自愿支持</span><h2 id="support-title">免费使用，也欢迎支持后续制作</h2><p>老师和学生可以直接使用这个课件，无需付款。若它对你的课堂或学习有帮助，欢迎自愿赞助；赞助与课件功能无关。</p></div>
+    <div class="community-grid">
+      <article class="community-card"><h3>自愿赞助</h3><p>用微信扫描下方收款码，支持继续制作开放的物理教学工具。</p><img src="{{DONATION_QR_DATA}}" alt="张专注物理微信赞助收款码" width="230" height="230" loading="lazy"></article>
+      <article class="community-card" id="customize"><h3>需要修改或定制课件？</h3><p>需要调整模型、知识点、交互方式或品牌展示，可以扫码加微信说明需求。定制修改是收费服务，沟通需求后再报价。</p><img src="{{CONTACT_QR_DATA}}" alt="张专注物理微信好友二维码，咨询收费定制服务" width="230" height="230" loading="lazy"></article>
+    </div>
+    <p class="community-link">作者 GitHub 显示名：zhangzhuanzhu（@zhangjinapr）。欢迎在 <a href="https://github.com/zhangjinapr/bar-magnet-3d-lesson" target="_blank" rel="noopener noreferrer">GitHub 查看源码、提出建议与支持项目</a>。仓库的赞助入口会指向本页。</p>
+  </section>
+  <footer><span><b>说明：</b>磁感线是描述磁场的模型，不是真实存在的线。</span><span>© 2026 张专注物理 · <a href="https://github.com/zhangjinapr/bar-magnet-3d-lesson/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT 开源许可</a></span></footer>
 </div>
 <script>{{APP_JS}}</script>
 </body>

@@ -7,6 +7,7 @@ $zipPath = Join-Path $releaseDir ("bar-magnet-3d-offline-v$version.zip")
 New-Item -ItemType Directory -Path $releaseDir -Force | Out-Null
 Compress-Archive -LiteralPath @(
   (Join-Path $projectRoot 'index.html'),
-  (Join-Path $projectRoot 'README-for-buyers.txt')
+  (Join-Path $projectRoot 'README-offline.txt'),
+  (Join-Path $projectRoot 'LICENSE')
 ) -DestinationPath $zipPath -Force
 Write-Output "Created $zipPath"

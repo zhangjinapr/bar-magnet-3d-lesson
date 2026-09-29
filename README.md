@@ -1,29 +1,34 @@
 # 条形磁铁 3D 磁场互动课件
 
-**私有源码仓库：** https://github.com/zhangjinapr/bar-magnet-3d-lesson  
-**在线交付：** 暂停。仓库改为私有后，原 GitHub Pages 链接已下线；确定销售与访问方式后再发布。
+**直接使用课件：** https://zhangjinapr.github.io/bar-magnet-3d-lesson/  
+**GitHub 源码：** https://github.com/zhangjinapr/bar-magnet-3d-lesson
 
-## 使用与代码权利
+老师和学生打开网页即可使用，无需登录或付款。可以旋转和缩放条形磁铁，切换水平剖面、3D 空间磁感线与竖直纸面，并观察磁场方向及纸面交点的 `·` / `×` 符号。
 
-本项目拟以付费方式授权使用，源码保持私有。**本仓库不采用开源许可证。**源代码及课件设计的其他权利由“张专注物理”保留。具体购买、交付和授权范围确定后，再对外开放使用。详见 [RIGHTS.md](RIGHTS.md)。
+## 开源许可
 
-打开网页即可旋转和缩放磁铁，切换水平剖面与 3D 空间磁感线，并观察竖直纸面上的 `·` / `×` 方向符号。网页所需代码全部打包进 `index.html`，访问者无需安装软件。
-
-## 本地使用与修改
-
-1. 安装 Node.js 和 Git。
-2. 在本项目文件夹运行 `npm ci`，然后运行 `npm run build`。
-3. 用浏览器打开 `index.html` 查看课件。
-4. 修改 `app.js`（模型与交互）或 `template.html`（界面文字与样式）后，再运行 `npm run build`。
-
-`dist/index.html` 是自动发布用文件。请提交源码和根目录的 `index.html`；`node_modules`、`dist` 和 `app.bundle.js` 不需要提交。
-
-## 修改课件
-
-修改课件后运行 `npm run build`，再提交并推送到 `main`。GitHub Actions 会检查项目能否构建，但当前不会自动公开发布网页。
-
-## 生成给购买者的离线包
-
-在项目文件夹运行 `npm run package:offline`，压缩包将生成在 `release/`。压缩包只包含可运行的 `index.html` 和购买者使用说明，不包含独立源码、构建脚本或 Git 历史。付款和交付渠道尚未接入；交付前应先确定购买者的授权范围。
+本项目采用 [MIT 许可证](LICENSE)，欢迎免费使用、修改和分享。请在复制或分发时保留版权与许可证声明。
 
 红端标 N、蓝端标 S 是课堂演示约定；原始实验照片未标明极性。磁感线按等效磁极模型绘制，是帮助理解空间方向的定性图示。
+
+## 自愿支持
+
+如果课件对你的教学或学习有帮助，欢迎自愿赞助，支持继续制作开放的物理教学工具。**赞助不是使用课件的条件。**点击仓库里的 **Sponsor / 赞助** 按钮可前往课件的赞助区，也可用微信扫描下面的收款码。
+
+<img src="assets/wechat-donate.png" alt="张专注物理微信赞助收款码" width="230">
+
+## 需要修改课件？
+
+如果希望为自己的课堂调整模型、知识点、交互或展示样式，可以扫码加微信说明需求。**专属修改与定制是收费服务，确认需求后再报价**；仓库现有课件及开源许可不受影响。
+
+<img src="assets/wechat-contact.png" alt="张专注物理微信好友二维码，咨询收费定制" width="230">
+
+GitHub 账号当前显示名为 **zhangzhuanzhu**，用户名为 **zhangjinapr**。仓库与网页链接以用户名 `zhangjinapr` 为准。
+
+## 本地运行与修改
+
+1. 安装 Node.js 和 Git，克隆本仓库。
+2. 在项目目录运行 `npm ci`，再运行 `npm run build`。
+3. 用浏览器打开根目录的 `index.html`；修改 `app.js` 或 `template.html` 后重新构建。
+
+`dist/index.html` 是 GitHub Pages 自动发布的单文件课件，代码和二维码已内嵌。向 `main` 推送更新后，GitHub Actions 会重新发布。需要离线压缩包时，在 Windows 上运行 `npm run package:offline`，生成文件位于 `release/`。
