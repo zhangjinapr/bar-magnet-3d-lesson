@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "esbuild app.js --bundle --minify --format=iife --outfile=app.bundle.js && node build.mjs"
+    "build": "esbuild app.js --bundle --minify --format=iife --outfile=app.bundle.js && node build.mjs",
+    "package:offline": "npm run build && powershell -NoProfile -ExecutionPolicy Bypass -File make-offline-package.ps1"
   },
   "dependencies": {
     "three": "0.160.1"
