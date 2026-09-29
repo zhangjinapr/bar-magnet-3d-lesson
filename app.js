@@ -71,7 +71,18 @@ function textSprite(label, color) {
   const c = document.createElement('canvas'); c.width = 256; c.height = 128;
   const ctx = c.getContext('2d');
   ctx.fillStyle = 'rgba(9,25,42,.88)';
-  ctx.beginPath(); ctx.roundRect(18, 18, 220, 92, 42); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(60, 18);
+  ctx.lineTo(196, 18);
+  ctx.quadraticCurveTo(238, 18, 238, 60);
+  ctx.lineTo(238, 68);
+  ctx.quadraticCurveTo(238, 110, 196, 110);
+  ctx.lineTo(60, 110);
+  ctx.quadraticCurveTo(18, 110, 18, 68);
+  ctx.lineTo(18, 60);
+  ctx.quadraticCurveTo(18, 18, 60, 18);
+  ctx.closePath();
+  ctx.fill();
   ctx.strokeStyle = color; ctx.lineWidth = 5; ctx.stroke();
   ctx.fillStyle = '#ffffff'; ctx.font = 'bold 62px Arial';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, 128, 67);
@@ -307,7 +318,9 @@ function resize() {
   }
   mobileCameraMode = mobile;
 }
-new ResizeObserver(resize).observe(mount); resize(); rebuild();
+if ('ResizeObserver' in window) new ResizeObserver(resize).observe(mount);
+else window.addEventListener('resize', resize);
+resize(); rebuild();
 function animate() {
   requestAnimationFrame(animate);
   if (document.querySelector('#auto').checked) scene.rotation.y += 0.0018;

@@ -62,14 +62,14 @@
     h1{font-size:clamp(21px,6vw,25px);}
     header p{font-size:12px;}
     .tagline{text-align:left;margin-top:5px;font-size:12px;}
-    main{height:clamp(290px,43svh,440px);min-height:0;}
+    main{height:43vh;height:clamp(290px,43vh,440px);height:clamp(290px,43svh,440px);min-height:0;}
     .stage-note{left:12px;right:12px;bottom:10px;padding:8px 10px;font-size:12px;line-height:1.45;}
     .stage-note .desktop-help{display:none;}
     .stage-note .mobile-help{display:inline;}
     .viewbar{left:10px;top:10px;}
     .viewbar button{min-height:40px;padding:8px 11px;}
     .axis{left:14px;top:64px;font-size:11px;}
-    aside{display:block;height:clamp(260px,calc(57svh - 100px),520px);min-height:0;overflow-y:auto;padding:16px 20px;}
+    aside{display:block;height:calc(57vh - 100px);height:clamp(260px,calc(57vh - 100px),520px);height:clamp(260px,calc(57svh - 100px),520px);min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 20px;}
     .control{min-height:50px;font-size:15px;}
     input[type=checkbox]{width:22px;height:22px;flex:none;}
     .lesson{margin-top:27px;}
@@ -82,8 +82,8 @@
     header{padding:9px 14px;}
     h1{font-size:21px;}
     header p,.tagline{display:none;}
-    main{grid-column:1;height:calc(100svh - 47px);min-height:250px;}
-    aside{grid-column:2;display:block;height:calc(100svh - 47px);min-height:250px;overflow-y:auto;padding:12px 14px;}
+    main{grid-column:1;height:calc(100vh - 47px);height:calc(100svh - 47px);min-height:250px;}
+    aside{grid-column:2;display:block;height:calc(100vh - 47px);height:calc(100svh - 47px);min-height:250px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px;}
     .viewbar{left:8px;top:8px;}
     .viewbar button{padding:7px 8px;font-size:12px;}
     .axis{left:11px;top:58px;}
