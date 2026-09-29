@@ -17,11 +17,9 @@
 
 <img src="assets/wechat-donate.png" alt="张专注物理微信赞助收款码" width="230">
 
-## 需要修改课件？
+## 联系我
 
-如果希望为自己的课堂调整模型、知识点、交互或展示样式，可以扫码加微信说明需求。**专属修改与定制是收费服务，确认需求后再报价**；仓库现有课件及开源许可不受影响。
-
-<img src="assets/wechat-contact.png" alt="张专注物理微信好友二维码，咨询收费定制" width="230">
+<img src="assets/wechat-contact.png" alt="联系我微信二维码" width="230">
 
 GitHub 账号当前显示名为 **zhangzhuanzhu**，用户名为 **zhangjinapr**。仓库与网页链接以用户名 `zhangjinapr` 为准。
 
